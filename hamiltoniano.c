@@ -9,26 +9,17 @@ struct Caminho {
   int peso;
 };
 
-int calcularPeso(int path[], int size, int graph[V][V]) {
+int calcularPeso(int path[], int size, int grafo[V][V]) {
   int peso = 0;
   for (int i = 0; i < size - 1; i++) {
-    peso += graph[path[i]][path[i + 1]];
+    peso += grafo[path[i]][path[i + 1]];
   }
-  peso += graph[path[size - 1]][path[0]];
+  peso += grafo[path[size - 1]][path[0]];
   return peso;
 }
 
-void imprimeCaminho(int path[], int size, int graph[V][V]) {
-  printf("Caminho: ");
-  for (int i = 0; i < size; i++) {
-    printf("%c ", 'A' + path[i]);
-  }
-  printf("%c", 'A' + path[0]);
-  printf(" (%d)\n", calcularPeso(path, size, graph));
-}
-
-bool isSafe(int v, int pos, int path[], int graph[V][V]) {
-  if (graph[path[pos - 1]][v] == 0)
+bool isSafe(int v, int pos, int path[], int grafo[V][V]) {
+  if (grafo[path[pos - 1]][v] == 0)
     return false;
 
   for (int i = 0; i < pos; i++)
@@ -38,11 +29,11 @@ bool isSafe(int v, int pos, int path[], int graph[V][V]) {
   return true;
 }
 
-bool hamiltonianCycleUtil(int graph[V][V], int path[], int pos,
-                          struct Caminho *caminhos, int *contador) {
+bool cicloUtil(int grafo[V][V], int path[], int pos, struct Caminho *caminhos,
+               int *contador) {
   if (pos == V) {
-    if (graph[path[pos - 1]][path[0]] != 0) {
-      caminhos[*contador].peso = calcularPeso(path, V, graph);
+    if (grafo[path[pos - 1]][path[0]] != 0) {
+      caminhos[*contador].peso = calcularPeso(path, V, grafo);
       for (int i = 0; i < V; i++) {
         caminhos[*contador].path[i] = path[i];
       }
@@ -55,10 +46,9 @@ bool hamiltonianCycleUtil(int graph[V][V], int path[], int pos,
 
   bool res = false;
   for (int v = 1; v < V; v++) {
-    if (isSafe(v, pos, path, graph)) {
+    if (isSafe(v, pos, path, grafo)) {
       path[pos] = v;
-      res =
-          hamiltonianCycleUtil(graph, path, pos + 1, caminhos, contador) || res;
+      res = cicloUtil(grafo, path, pos + 1, caminhos, contador) || res;
       path[pos] = -1;
     }
   }
@@ -66,36 +56,44 @@ bool hamiltonianCycleUtil(int graph[V][V], int path[], int pos,
   return res;
 }
 
-int compararCaminhos(const void *a, const void *b) {
+int compararPaths(const void *a, const void *b) {
   return ((struct Caminho *)a)->peso - ((struct Caminho *)b)->peso;
 }
 
-void hamiltonianCycle(int graph[V][V]) {
+void imprimePath(int path[], int size, int grafo[V][V]) {
+  printf("Caminho: ");
+  for (int i = 0; i < size; i++) {
+    printf("%c ", 'A' + path[i]);
+  }
+  printf("%c", 'A' + path[0]);
+  printf(" (%d)\n", calcularPeso(path, size, grafo));
+}
+
+void cicloHam(int grafo[V][V]) {
   int path[V];
   for (int i = 0; i < V; i++)
     path[i] = -1;
 
   path[0] = 0;
 
-  struct Caminho caminhos[V * (V - 1)]; // No máximo V! caminhos
+  struct Caminho caminhos[V * (V - 1)];
   int contador = 0;
 
-  if (!hamiltonianCycleUtil(graph, path, 1, caminhos, &contador)) {
+  if (!cicloUtil(grafo, path, 1, caminhos, &contador)) {
     printf("Não existe ciclo Hamiltoniano no grafo.\n");
     return;
   }
 
-  qsort(caminhos, contador, sizeof(struct Caminho), compararCaminhos);
+  qsort(caminhos, contador, sizeof(struct Caminho), compararPaths);
 
-  for (int i = 0; i < contador; i++) {
-    imprimeCaminho(caminhos[i].path, V, graph);
-  }
+  for (int i = 0; i < contador; i++)
+    imprimePath(caminhos[i].path, V, grafo);
 }
 
 int main() {
-  int graph[V][V] = {{0, 4, 2, 1}, {4, 0, 13, 9}, {2, 13, 0, 8}, {1, 9, 8, 0}};
+  int grafo[V][V] = {{0, 4, 2, 1}, {4, 0, 13, 9}, {2, 13, 0, 8}, {1, 9, 8, 0}};
 
-  hamiltonianCycle(graph);
+  cicloHam(grafo);
 
   return 0;
 }
